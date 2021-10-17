@@ -1,20 +1,6 @@
-
 import streamlit as st
 import pandas as pd
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.linear_model import LogisticRegression
-from sklearn.linear_model import SGDClassifier
-from sklearn.naive_bayes import CategoricalNB
-import matplotlib.pyplot as plt
-from sklearn.pipeline import make_pipeline
-from sklearn.compose import make_column_selector, make_column_transformer
-from sklearn.preprocessing import OneHotEncoder
 from sklearn.model_selection import train_test_split
-from sklearn.impute import SimpleImputer
-import seaborn as sns
-import numpy as np
-
-
 
 st.write("""
 # Machine Learning Covid-19 death Prediction App
@@ -34,13 +20,13 @@ def user_input_features():
     symptoms = st.selectbox('Symptoms(Asymptomatic=0, Symptomatic=1,Unknown=2)', ('0', '1','2'))
     hospitalisation = st.selectbox('Hospitalisation(No=0, Yes=1, Unknown=2)', ('0', '1', '2'))
     intensive_care = st.selectbox('Intensive care(No=0, Yes=1, Unknown=2)', ('0', '1', '2'))
-    comorbidities= st.selectbox('comorbidities(No=0, Yes=1, Unknown=2)', ('0', '1', '2'))
+    comorbidities= st.selectbox('Comorbidities(No=0, Yes=1, Unknown=2)', ('0', '1', '2'))
     data = {'age': age,
             'race': race,
             'exposure': exposure,
             'symptoms': symptoms,
             'hospitalisation':hospitalisation,
-            'intensive_care':intensive_care,
+            'intensive care':intensive_care,
             'comorbidities':comorbidities}
 
     features = pd.DataFrame(data, index=[0])
@@ -48,7 +34,53 @@ def user_input_features():
 
 df = user_input_features()
 
-
 st.subheader('User Input parameters confirmation')
 st.write(df)
 
+death_covid = pd.read_csv('C:/Users/DDD/Desktop/data/covid_cleaned_1_coded_ML_10percent.csv', header=0)
+death_covid =death_covid.astype(str)
+
+# Selectionner les prédicteurs et la variable réponse
+
+y = death_covid['death']
+X = death_covid.drop('death', axis=1)
+X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.pipeline import make_pipeline
+encoder= OneHotEncoder()
+
+LR= make_pipeline (encoder,LogisticRegression(penalty="l2", solver='lbfgs', max_iter=1000,random_state=1 ))
+
+# fit logistic regression
+
+LR=LR.steps[1][1]
+LR_fit=LR.fit(X_train, y_train)
+
+# Prediction
+prediction = LR.predict(df)
+prediction_proba = LR.predict_proba(df)
+prediction_proba_percent = prediction_proba * 100
+proba = prediction_proba[:, 1]
+prediction_proba_percent = proba * 100
+
+st.subheader('Logistic regression Probability of death(%)')
+st.write(prediction_proba_percent)
+
+# fit Catboost
+from catboost import CatBoostClassifier
+CatBoost= make_pipeline(encoder, CatBoostClassifier(random_state=1))
+
+CatBoost=CatBoost.steps[1][1]
+CatBoostfit=CatBoost.fit(X_train, y_train)
+
+# Prediction
+prediction = CatBoost.predict(df)
+prediction_proba = CatBoost.predict_proba(df)
+prediction_proba_percent = prediction_proba * 100
+proba = prediction_proba[:, 1]
+prediction_proba_percent = proba * 100
+
+st.subheader('CatBoost Probability of death(%)')
+st.write(prediction_proba_percent)
