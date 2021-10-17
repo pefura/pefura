@@ -1,6 +1,10 @@
 import streamlit as st
 import pandas as pd
 from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.pipeline import make_pipeline
+from catboost import CatBoostClassifier
 
 st.write("""
 # Machine Learning Covid-19 death Prediction App
@@ -45,12 +49,8 @@ death_covid =death_covid.astype(str)
 y = death_covid['death']
 X = death_covid.drop('death', axis=1)
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
-
-from sklearn.linear_model import LogisticRegression
-from sklearn.preprocessing import OneHotEncoder
-from sklearn.pipeline import make_pipeline
+                                                    
 encoder= OneHotEncoder()
-
 LR= make_pipeline (encoder,LogisticRegression(penalty="l2", solver='lbfgs', max_iter=1000,random_state=1 ))
 
 # fit logistic regression
@@ -69,9 +69,7 @@ st.subheader('Logistic regression Probability of death(%)')
 st.write(prediction_proba_percent)
 
 # fit Catboost
-from catboost import CatBoostClassifier
 CatBoost= make_pipeline(encoder, CatBoostClassifier(random_state=1))
-
 CatBoost=CatBoost.steps[1][1]
 CatBoostfit=CatBoost.fit(X_train, y_train)
 
